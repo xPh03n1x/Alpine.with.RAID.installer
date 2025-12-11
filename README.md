@@ -3,6 +3,8 @@ The standard Alpine installation ISO doesn't have out-of-the-box support for cus
 
 _* Currently this has been tested only with RAID 0,1, and 10._
 
+
+
 # Getting Started
 Boot into the Alpine installation ISO and follow the steps below:
 ### 1. Prepare the network interface of your server
@@ -12,6 +14,8 @@ setup-interfaces -ra && echo 'nameserver 8.8.8.8' > /etc/resolv.conf
 
 This will bring your network interface up and (assuming you have DHCP) automatically establish the connection without any user prompts.
 Afterward the configuration for the DNS server of the Alpine installer will be replaced with Google's Public DNS servers' IP address.
+
+
 
 ### 2. Prepare APK
 ```bash
