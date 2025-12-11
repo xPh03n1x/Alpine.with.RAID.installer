@@ -2,10 +2,10 @@
 
 ### Precursor ###
 # - Prepare the server's network before you can download and run this script
-# setup-interfaces -ra && echo 'nameserver 8.8.8.8' >> /etc/resolv.conf && setup-apkrepos -f [87] && apk add curl
+# setup-interfaces -ra && echo 'nameserver 8.8.8.8' >> /etc/resolv.conf && setup-apkrepos -f && apk add curl
 
 # - Download and run the script:
-# /bin/sh -c "$(curl -fsSL http://1.1.1.2:3000)"
+# /bin/sh -c "$(curl -fsSL https://tinyurl.com/mrbtnytc)"
 
 # ! REMEMBER !
 # After the installation is complete you should set your SSH keys and reconfigure OpenSSH
@@ -19,7 +19,7 @@
 #####################################################
 
 # If empty you will be asked interactively (safer, maybe?)
-ROOT_PASSWORD="123";
+ROOT_PASSWORD="";
 
 DRIVES="/dev/sda /dev/sdb";
 
