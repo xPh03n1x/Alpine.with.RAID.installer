@@ -18,18 +18,24 @@ HOSTNAME="localhost";
 TIMEZONE="UTC"; # UTC is recommended
 
 PARTITIONS="
-PART /boot vfat 512M
-PART /data ext4 2G		# Data partition: The place where you store main data
-PART /backup ext4 2G		# Use same fs like Data and at least the same size
+PART /boot/efi vfat 512M
+PART /boot ext4 512M
+PART /vm ext4 2G		# Data partition: The place where you store main data
+PART /backup ext4 2G	# Use same fs like Data and at least the same size
 PART swap swap 1G		# 1/2 of RAM, 1:1 RAM, or 2/1 of RAM
 PART / ext4 all			# Define as last in order to occupy all remaining space
 "
 
 # RAM to be allocated for /tmp
-TMP_SIZE="1G"; 			# leave empty ("") if not needed
+TMP_SIZE="1G"; # leave empty ("") if not needed
 
 EXTRA_PACKAGES="wget sgdisk wipefs parted mdadm e2fsprogs dosfstools rsync sfdisk grub-efi efibootmgr";
 OS_PACKAGES="nano openssh chrony";
+
+
+
+
+
 
 
 
@@ -119,8 +125,8 @@ for d in $USED_DRIVES; do
 	sgdisk -Z $d; # Wipe the disk
 	pnum=1
 	while read -r _ mp fs sz rest; do
-		if [ "$mp" = "/boot" ]; then
-			echo -n "Formatting /boot ... " && sgdisk -n$pnum:1M:+$sz -t$pnum:FD00 -c $pnum:"/boot" $d
+		if [ "$mp" = "/boot/efi" ]; then
+			echo -n "Formatting /boot/efi ... " && sgdisk -n$pnum:1M:+$sz -t$pnum:FD00 -c $pnum:"/boot/efi" $d
 		elif [ "$sz" = "all" ];then
 			echo -n "Formatting $mp ... " && sgdisk -n$pnum:0:0 -t$pnum:FD00 -c $pnum:"$mp" $d
 		else
@@ -136,7 +142,7 @@ for d in $USED_DRIVES; do
 	sync
 	partprobe "$d"
 done
-# sgdisk $d --attributes=1:set:$pnum
+
 sleep 1
 mdev -s
 sync
@@ -189,13 +195,13 @@ while [ "$p" -lt "$pnum" ]; do
 	label="$mp";
 	[ "$mp" = "/" ] && label="/" && ROOT_FS="$fs";
 	[ "$mp" = "swap" ] && label="[SWAP]";
-	[ "$mp" = "/boot" ] && label="boot";
+	[ "$mp" = "/boot/efi" ] && label="EFI";
 
 	if [ "$SWRAID" = "1" ]; then
 		device="/dev/md${array_idx}";
 		metadata="1.2";
 		# The usage of metadata 1.0 is MANDATORY for the /boot EFI partition and for the SWAP partition
-		[ "$fs" = "vfat" -o "$fs" = "swap" ] && metadata="1.0";
+		[ "$mp" = "/boot/efi" -o "$fs" = "swap" ] && metadata="1.0";
 
 		echo "Creating RAID $SWRAIDLEVEL $device → $mp ($fs)"
 
@@ -228,13 +234,14 @@ while [ "$p" -lt "$pnum" ]; do
 		case "$fs" in
 			swap) mkswap -L "$label" "$device" ;;
 			ext2) mkfs.ext2 -F -m 1 -L "$label" "$device" ;;
+			ext3) mkfs.ext3 -F -m 1 -L "$label" "$device" ;;
 			ext4) mkfs.ext4 -F -L "$label" "$device" ;;
 			vfat) mkfs.vfat -F 32 -n "$label" "$device" ;;
 		esac
 
 		# Map the ROOT and BOOT EFI partitions to the corresponding /dev/md$ devices
 		[ "$mp" = "/" ] && ROOT_PART="$device";
-		[ "$mp" = "/boot" ] && efipart="$device";
+		[ "$mp" = "/boot/efi" ] && efipart="$device";
 	fi
 echo && echo
 	p=$((p + 1))
@@ -258,24 +265,28 @@ done
 # Mount the root partition
 mount -t "$ROOT_FS" "$ROOT_PART" /mnt;
 
+
+
 # Mount partitions
 for p in $(seq 1 $NUM_REAL_PARTS); do
 	mp=$(eval echo "\$MOUNTPOINT_$p")
 	fs=$(eval echo "\$FSTYPE_$p")
 	dev=$(eval echo "\$DEVICE_$p")
 
-	[ "$mp" = "/" ] && continue
-	[ "$fs" = "tmpfs" ] && continue
+	[ "$mp" = "/" -o "$fs" = "tmpfs" ] && continue
 	[ "$mp" = "swap" ] && { swapon "$dev"; continue; }
-	if [ "$mp" = "/boot" ] && [ "$BOOT_MODE" = "uefi" ];then
-		mkdir -p /mnt/boot/efi;
-		mount -t vfat "$efipart" /mnt/boot/efi;
+
+	if [ "$mp" = "/boot/efi" ] && [ "$BOOT_MODE" = "uefi" ];then
 		continue;
 	fi
 
 	mkdir -p "/mnt$mp"
 	mount -t "$fs" "$dev" "/mnt$mp"
 done
+
+# Mount EFI partition
+mkdir -p /mnt/boot/efi;
+mount -t vfat "$efipart" /mnt/boot/efi;
 
 
 echo -e $SEP$SEP"=== Installing Alpine ... ===\n";
