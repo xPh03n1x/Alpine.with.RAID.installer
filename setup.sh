@@ -1,19 +1,5 @@
 #!/bin/sh
 
-### Precursor ###
-# - Prepare the server's network before you can download and run this script
-# setup-interfaces -ra && echo 'nameserver 8.8.8.8' >> /etc/resolv.conf && setup-apkrepos -f && apk add curl
-
-# - Download and run the script:
-# /bin/sh -c "$(curl -fsSL https://tinyurl.com/mrbtnytc)"
-
-# ! REMEMBER !
-# After the installation is complete you should set your SSH keys and reconfigure OpenSSH
-# /etc/ssh/sshd_config
-#   PermitRootLogin without-password
-#   PasswordAuthentication no
-
-
 #####################################################
 ############### Modify per your needs ###############
 #####################################################
@@ -29,18 +15,18 @@ SWRAID=1;
 SWRAIDLEVEL=1;
 
 HOSTNAME="localhost";
-TIMEZONE="Europe/Sofia"; # UTC is recommended
+TIMEZONE="UTC"; # UTC is recommended
 
 PARTITIONS="
 PART /boot vfat 512M
-PART /vm ext4 2G		# Data partition: The place where you store main data
-PART /backup ext4 2G	# Use same fs like Data and at least the same size
+PART /data ext4 2G		# Data partition: The place where you store main data
+PART /backup ext4 2G		# Use same fs like Data and at least the same size
 PART swap swap 1G		# 1/2 of RAM, 1:1 RAM, or 2/1 of RAM
 PART / ext4 all			# Define as last in order to occupy all remaining space
 "
 
 # RAM to be allocated for /tmp
-TMP_SIZE="1G"; # leave empty ("") if not needed
+TMP_SIZE="1G"; 			# leave empty ("") if not needed
 
 EXTRA_PACKAGES="wget sgdisk wipefs parted mdadm e2fsprogs dosfstools rsync sfdisk grub-efi efibootmgr";
 OS_PACKAGES="nano openssh chrony";
