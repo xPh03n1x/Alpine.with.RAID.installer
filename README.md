@@ -74,7 +74,7 @@ vi /etc/ssh/sshd_config
 and disable the password authentication for the `root` user:
 ```
 PermitRootLogin without-password
-PasswordAuthentication yes
+PasswordAuthentication no
 ```
 Afterwards, you should of course attach your SSH keys, and so on ...
 
